@@ -41,6 +41,42 @@ const soundFiles = [
   'audio/nov-35.mp3', //35
 ];
 
+const specialSoundPath = 'audio/special.mp3';
+const specialAudio = new Audio(specialSoundPath);
+const spaceState = { held: false };
+
+const updateSpaceButtonState = () => {
+  const buttons = buttonGrid.querySelectorAll('.grid-button');
+  buttons.forEach((button) => {
+    button.classList.toggle('space-active', spaceState.held);
+  });
+};
+
+const playSpecialSound = () => {
+  specialAudio.pause();
+  specialAudio.currentTime = 0;
+  specialAudio.play().catch(() => {
+    // Intentionally ignored: the sound file can be dropped in at audio/special.mp3.
+  });
+};
+
+window.addEventListener('keydown', (event) => {
+  if (event.code === 'Space') {
+    event.preventDefault();
+    if (!spaceState.held) {
+      spaceState.held = true;
+      updateSpaceButtonState();
+    }
+  }
+});
+
+window.addEventListener('keyup', (event) => {
+  if (event.code === 'Space') {
+    spaceState.held = false;
+    updateSpaceButtonState();
+  }
+});
+
 for (let i = 0; i < soundFiles.length; i += 1) {
   const button = document.createElement('button');
   button.className = 'grid-button';
@@ -59,6 +95,11 @@ for (let i = 0; i < soundFiles.length; i += 1) {
   };
 
   button.addEventListener('click', () => {
+    if (spaceState.held) {
+      playSpecialSound();
+      return;
+    }
+
     if (state.playing) {
       stop();
       return;

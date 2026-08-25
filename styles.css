@@ -1,6 +1,7 @@
 :root {
   --edge: clamp(8px, 1.6vw, 24px);
   --playing-color: #4e2a84;
+  --space-active-color: #1d7bff;
 }
 
 * {
@@ -60,6 +61,11 @@ header {
 .grid-button:active {
   transform: scale(0.98);
   filter: brightness(0.95);
+}
+
+.grid-button.space-active:not(.playing) {
+  background: linear-gradient(145deg, var(--space-active-color), #124bb5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 14px rgba(29, 123, 255, 0.55);
 }
 
 .grid-button.playing {
