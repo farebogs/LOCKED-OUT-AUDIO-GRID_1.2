@@ -60,6 +60,54 @@ const playSpecialSound = () => {
   });
 };
 
+// Touch: block long-press menus and multi-finger pinch zoom.
+window.addEventListener('contextmenu', (event) => event.preventDefault());
+document.addEventListener(
+  'touchmove',
+  (event) => {
+    if (event.touches.length > 1) event.preventDefault();
+  },
+  { passive: false }
+);
+
+// Browsers only allow fullscreen and audio after a user gesture, so the first
+// touch anywhere goes fullscreen and unlocks/preloads the audio.
+const requestFullscreen = () => {
+  const root = document.documentElement;
+  if (document.fullscreenElement) return;
+  const request = root.requestFullscreen || root.webkitRequestFullscreen;
+  if (request) {
+    Promise.resolve(request.call(root, { navigationUI: 'hide' })).catch(() => {});
+  }
+};
+
+const unlockAudio = () => {
+  const unlocker = new Audio(specialSoundPath);
+  unlocker.muted = true;
+  unlocker.play().then(() => unlocker.pause()).catch(() => {});
+  soundFiles.forEach((path) => {
+    const preload = new Audio(path);
+    preload.preload = 'auto';
+  });
+};
+
+let firstTouchDone = false;
+const onFirstTouch = () => {
+  if (firstTouchDone) return;
+  firstTouchDone = true;
+  unlockAudio();
+};
+
+// Fullscreen is re-requested on every touch in case the player swiped out of it.
+window.addEventListener('click', () => {
+  onFirstTouch();
+  requestFullscreen();
+});
+
+// Try fullscreen immediately too; works when launched from a home-screen shortcut
+// or kiosk browser that permits it, and is silently ignored otherwise.
+requestFullscreen();
+
 window.addEventListener('keydown', (event) => {
   if (event.code === 'Space') {
     event.preventDefault();

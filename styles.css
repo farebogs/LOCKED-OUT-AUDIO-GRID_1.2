@@ -6,6 +6,11 @@
 
 * {
   box-sizing: border-box;
+  /* Touch: no long-press menus, text selection, or grey tap flash. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -14,13 +19,18 @@ body {
   padding: 0;
   width: 100%;
   height: 100%;
+  height: 100dvh; /* fits the visible screen even with the browser bar showing */
   overflow: hidden;
+  overscroll-behavior: none; /* no pull-to-refresh or bounce */
+  touch-action: none; /* no pinch zoom, double-tap zoom, or panning */
   background: #111;
 }
 
 body {
   display: flex;
   flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 header {
@@ -33,7 +43,8 @@ header {
   font-size: clamp(1.5rem, 5vw, 4rem);
   color: #f7f7f7;
   letter-spacing: 0.05em;
-
+  text-align: center;
+  padding: 0 var(--edge);
 }
 
 .grid {
@@ -45,6 +56,18 @@ header {
   grid-template-rows: repeat(5, minmax(0, 1fr));
   gap: var(--edge);
   padding: var(--edge);
+}
+
+/* Portrait tablets: flip to 5 wide x 7 tall so buttons stay roughly square. */
+@media (orientation: portrait) {
+  header {
+    flex-basis: 10%;
+  }
+
+  .grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-rows: repeat(7, minmax(0, 1fr));
+  }
 }
 
 .grid-button {
