@@ -2,6 +2,7 @@
   --edge: clamp(8px, 1.6vw, 24px);
   --playing-color: #4e2a84;
   --space-active-color: #1d7bff;
+  --error-color: #c62828;
 }
 
 * {
@@ -94,4 +95,9 @@ header {
 .grid-button.playing {
   background: linear-gradient(145deg, var(--playing-color), #35205e);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 14px rgba(78, 42, 132, 0.55);
+}
+
+/* Brief red flash when a sound fails to play (e.g. missing file). */
+.grid-button.error {
+  background: linear-gradient(145deg, var(--error-color), #8e1c1c);
 }

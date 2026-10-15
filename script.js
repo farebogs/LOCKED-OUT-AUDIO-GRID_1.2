@@ -4,59 +4,50 @@ const buttonGrid = document.getElementById('buttonGrid');
 
 // Replace each placeholder with the path to your own MP3 file.
 const soundFiles = [
-  'audio/nov-1.mp3', //1
-  'audio/nov-2.mp3', //2
-  'audio/nov-3.mp3', //3
-  'audio/nov-4.mp3', //4
-  'audio/nov-5.mp3', //5
-  'audio/nov-6.mp3', //6
-  'audio/nov-7.mp3', //7
-  'audio/nov-8.mp3', //8
-  'audio/nov-9.mp3', //9
-  'audio/nov-10.mp3', //10
-  'audio/nov-11.mp3', //11
-  'audio/nov-12.mp3', //12
-  'audio/nov-13.mp3', //13
-  'audio/nov-14.mp3', //14
-  'audio/nov-15.mp3', //15
-  'audio/nov-16.mp3', //16
-  'audio/nov-17.mp3', //17
-  'audio/nov-18.mp3', //18
-  'audio/nov-19.mp3', //19
-  'audio/nov-20.mp3', //20
-  'audio/nov-21.mp3', //21
-  'audio/nov-22.mp3', //22
-  'audio/nov-23.mp3', //23
-  'audio/nov-24.mp3', //24
-  'audio/nov-25.mp3', //25
-  'audio/nov-26.mp3', //26
-  'audio/nov-27.mp3', //27
-  'audio/nov-28.mp3', //28
-  'audio/nov-29.mp3', //29
-  'audio/nov-30.mp3', //30
-  'audio/nov-31.mp3', //31
-  'audio/nov-32.mp3', //32
-  'audio/nov-33.mp3', //33
-  'audio/nov-34.mp3', //34
-  'audio/nov-35.mp3', //35
+  'audio/nov-1.m4a', //1
+  'audio/nov-2.m4a', //2
+  'audio/nov-3.m4a', //3
+  'audio/nov-4.m4a', //4
+  'audio/nov-5.m4a', //5
+  'audio/nov-6.m4a', //6
+  'audio/nov-7.m4a', //7
+  'audio/nov-8.m4a', //8
+  'audio/nov-9.m4a', //9
+  'audio/nov-10.m4a', //10
+  'audio/nov-11.m4a', //11
+  'audio/nov-12.m4a', //12
+  'audio/nov-13.m4a', //13
+  'audio/nov-14.m4a', //14
+  'audio/nov-15.m4a', //15
+  'audio/nov-16.m4a', //16
+  'audio/nov-17.m4a', //17
+  'audio/nov-18.m4a', //18
+  'audio/nov-19.m4a', //19
+  'audio/nov-20.m4a', //20
+  'audio/nov-21.m4a', //21
+  'audio/nov-22.m4a', //22
+  'audio/nov-23.m4a', //23
+  'audio/nov-24.m4a', //24
+  'audio/nov-25.m4a', //25
+  'audio/nov-26.m4a', //26
+  'audio/nov-27.m4a', //27
+  'audio/nov-28.m4a', //28
+  'audio/nov-29.m4a', //29
+  'audio/nov-30.m4a', //30
+  'audio/nov-31.m4a', //31
+  'audio/nov-32.m4a', //32
+  'audio/nov-33.m4a', //33
+  'audio/nov-34.m4a', //34
+  'audio/nov-35.m4a', //35
 ];
 
 const specialSoundPath = 'audio/special.mp3';
-const specialAudio = new Audio(specialSoundPath);
 const spaceState = { held: false };
 
 const updateSpaceButtonState = () => {
   const buttons = buttonGrid.querySelectorAll('.grid-button');
   buttons.forEach((button) => {
     button.classList.toggle('space-active', spaceState.held);
-  });
-};
-
-const playSpecialSound = () => {
-  specialAudio.pause();
-  specialAudio.currentTime = 0;
-  specialAudio.play().catch(() => {
-    // Intentionally ignored: the sound file can be dropped in at audio/special.mp3.
   });
 };
 
@@ -70,39 +61,48 @@ document.addEventListener(
   { passive: false }
 );
 
-// Browsers only allow fullscreen and audio after a user gesture, so the first
-// touch anywhere goes fullscreen and unlocks/preloads the audio.
+// Browsers only allow fullscreen and audio after a user gesture. Every sound is
+// created and preloaded up front so a tap can call play() immediately, while the
+// browser still counts it as a user gesture.
 const requestFullscreen = () => {
   const root = document.documentElement;
-  if (document.fullscreenElement) return;
+  if (document.fullscreenElement || document.webkitFullscreenElement) return;
   const request = root.requestFullscreen || root.webkitRequestFullscreen;
   if (request) {
     Promise.resolve(request.call(root, { navigationUI: 'hide' })).catch(() => {});
   }
 };
 
-const unlockAudio = () => {
-  const unlocker = new Audio(specialSoundPath);
-  unlocker.muted = true;
-  unlocker.play().then(() => unlocker.pause()).catch(() => {});
-  soundFiles.forEach((path) => {
-    const preload = new Audio(path);
-    preload.preload = 'auto';
-  });
+const createAudio = (path) => {
+  const audio = new Audio(path);
+  audio.preload = 'auto';
+  audio.setAttribute('playsinline', '');
+  audio.load();
+  return audio;
 };
 
-let firstTouchDone = false;
-const onFirstTouch = () => {
-  if (firstTouchDone) return;
-  firstTouchDone = true;
-  unlockAudio();
+// Rewinds and plays from inside the tap handler. Returns the play() promise.
+const playFromStart = (audio) => {
+  audio.pause();
+  try {
+    audio.currentTime = 0;
+  } catch (error) {
+    // Some WebViews throw if the file hasn't loaded metadata yet; play anyway.
+  }
+  return Promise.resolve(audio.play());
 };
+
+const flashError = (button, path, error) => {
+  console.warn(`Could not play ${path}:`, error);
+  button.classList.add('error');
+  setTimeout(() => button.classList.remove('error'), 600);
+};
+
+const specialAudio = createAudio(specialSoundPath);
 
 // Fullscreen is re-requested on every touch in case the player swiped out of it.
-window.addEventListener('click', () => {
-  onFirstTouch();
-  requestFullscreen();
-});
+// This runs after the button's own click handler, so the sound has already started.
+window.addEventListener('click', requestFullscreen);
 
 // Try fullscreen immediately too; works when launched from a home-screen shortcut
 // or kiosk browser that permits it, and is silently ignored otherwise.
@@ -131,35 +131,36 @@ for (let i = 0; i < soundFiles.length; i += 1) {
   button.type = 'button';
   button.setAttribute('aria-label', `Button ${i + 1}`);
 
-  const state = { audio: null, playing: false };
+  const audio = createAudio(soundFiles[i]);
+  let playing = false;
 
   const stop = () => {
-    if (state.audio) {
-      state.audio.pause();
-      state.audio.currentTime = 0;
-    }
-    state.playing = false;
+    audio.pause();
+    playing = false;
     button.classList.remove('playing');
   };
 
+  audio.addEventListener('ended', stop);
+
   button.addEventListener('click', () => {
     if (spaceState.held) {
-      playSpecialSound();
+      playFromStart(specialAudio).catch((error) =>
+        flashError(button, specialSoundPath, error)
+      );
       return;
     }
 
-    if (state.playing) {
+    if (playing) {
       stop();
       return;
     }
 
-    const audio = new Audio(soundFiles[i]);
-    audio.addEventListener('ended', stop);
-    audio.addEventListener('error', stop);
-    state.audio = audio;
-    state.playing = true;
+    playing = true;
     button.classList.add('playing');
-    audio.play().catch(stop);
+    playFromStart(audio).catch((error) => {
+      stop();
+      flashError(button, soundFiles[i], error || audio.error);
+    });
   });
 
   buttonGrid.appendChild(button);
