@@ -24,7 +24,7 @@ body {
   overflow: hidden;
   overscroll-behavior: none; /* no pull-to-refresh or bounce */
   touch-action: none; /* no pinch zoom, double-tap zoom, or panning */
-  background: #111;
+  background: #29abe2;
 }
 
 body {
